@@ -2,7 +2,7 @@ namespace Data.Domain.Account;
 
 public class Account
 {
-    public Guid AccountId { get; } = Guid.NewGuid();
+    public Guid AccountId { get; init; }
     public string Username { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = string.Empty;
@@ -12,13 +12,11 @@ public class Account
 
     protected Account(string username, string email, string passwordHash)
     {
-        if (string.IsNullOrWhiteSpace(username))
-            throw new ArgumentException("Username cannot be empty or whitespace.", nameof(username));
-        if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("Email cannot be empty or whitespace.", nameof(email));
-        if (string.IsNullOrWhiteSpace(passwordHash))
-            throw new ArgumentException("PasswordHash cannot be empty or whitespace.", nameof(passwordHash));
+        ValidateUsername(username);
+        ValidateEmail(email);
+        ValidatePasswordHash(passwordHash);
 
+        AccountId = Guid.NewGuid();
         Username = username;
         Email = email;
         PasswordHash = passwordHash;
@@ -26,22 +24,37 @@ public class Account
 
     public void UpdateUsername(string newUsername)
     {
-        if (string.IsNullOrWhiteSpace(newUsername))
-            throw new ArgumentException("Username cannot be empty or whitespace.", nameof(newUsername));
+        ValidateUsername(newUsername);
         Username = newUsername;
     }
 
     public void UpdateEmail(string newEmail)
     {
-        if (string.IsNullOrWhiteSpace(newEmail))
-            throw new ArgumentException("Email cannot be empty or whitespace.", nameof(newEmail));
+        ValidateEmail(newEmail);
         Email = newEmail;
     }
-    
+
     public void UpdatePasswordHash(string newPasswordHash)
     {
-        if (string.IsNullOrWhiteSpace(newPasswordHash))
-            throw new ArgumentException("PasswordHash cannot be empty or whitespace.", nameof(newPasswordHash));
+        ValidatePasswordHash(newPasswordHash);
         PasswordHash = newPasswordHash;
+    }
+
+    private static void ValidateUsername(string username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            throw new ArgumentException("Username cannot be empty or whitespace.", nameof(username));
+    }
+
+    private static void ValidateEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email cannot be empty or whitespace.", nameof(email));
+    }
+    
+    private static void ValidatePasswordHash(string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new ArgumentException("PasswordHash cannot be empty or whitespace.", nameof(passwordHash));
     }
 }

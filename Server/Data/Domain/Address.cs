@@ -2,7 +2,7 @@ namespace Data.Domain;
 
 public class Address
 {
-    public Guid AddressId { get; } = Guid.NewGuid();
+    public Guid AddressId { get; init; }
     public string Street { get; private set; } = string.Empty;
     public string City { get; private set; } = string.Empty;
     public string State { get; private set; } = string.Empty;
@@ -27,6 +27,7 @@ public class Address
         if (string.IsNullOrWhiteSpace(country))
             throw new ArgumentException("Country cannot be null or empty.", nameof(country));
 
+        AddressId = Guid.NewGuid();
         Street = street;
         City = city;
         State = state;
