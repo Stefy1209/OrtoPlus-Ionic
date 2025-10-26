@@ -37,6 +37,17 @@ builder.Services.AddAutoMapper(cfg =>
 // Add Controllers
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowIonicApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:8100")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -51,6 +62,7 @@ if (app.Environment.IsDevelopment())
     await DatabaseSeeder.SeedAsync(dbContext);
 }
 
+app.UseCors("AllowIonicApp");
 app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();
