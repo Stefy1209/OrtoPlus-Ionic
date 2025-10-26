@@ -1,3 +1,4 @@
+using Business.Hubs;
 using Business.Profiles;
 using Business.Service.Implementations;
 using Business.Service.Interfaces;
@@ -37,6 +38,7 @@ builder.Services.AddAutoMapper(cfg =>
 // Add Controllers
 builder.Services.AddControllers();
 
+// Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowIonicApp", policy =>
@@ -47,6 +49,9 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -65,4 +70,5 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowIonicApp");
 app.UseHttpsRedirection();
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
 app.Run();

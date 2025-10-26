@@ -34,6 +34,7 @@ import './theme/variables.css';
 import ClinicsPage from './pages/ClinicsPage';
 import ClinicDetailPage from './pages/ClinicDetailPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { NotificationProvider } from './components/NotificationProvider';
 
 setupIonicReact();
 
@@ -49,6 +50,7 @@ const queryClient = new QueryClient({
 const App: React.FC = () => (
   <QueryClientProvider client={queryClient}>
     <IonApp>
+      <NotificationProvider>
       <IonReactRouter>
         <IonRouterOutlet>
           <Route exact path="/clinics">
@@ -62,6 +64,7 @@ const App: React.FC = () => (
           </Route>
         </IonRouterOutlet>
       </IonReactRouter>
+      </NotificationProvider>
     </IonApp>
   </QueryClientProvider>
 );
