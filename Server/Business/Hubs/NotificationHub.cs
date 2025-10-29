@@ -1,11 +1,27 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Business.Hubs;
 
-public class NotificationHub : Hub
+public interface INotificationClient
 {
-    public async Task SendNotification(string userId, string message)
+    Task ReceiveNotification(string message);
+}
+
+[Authorize]
+public class NotificationHub : Hub<INotificationClient>
+{
+    public override async Task OnConnectedAsync()
     {
-        await Clients.User(userId).SendAsync("ReceiveNotification", message);
+        var userId = Context.UserIdentifier;
+        Console.WriteLine($"User {userId} connected to NotificationHub");
+        await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception exception)
+    {
+        var userId = Context.UserIdentifier;
+        Console.WriteLine($"User {userId} disconnected from NotificationHub");
+        await base.OnDisconnectedAsync(exception);
     }
 }

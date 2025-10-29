@@ -68,8 +68,26 @@ public class ClinicRepository(ApplicationDbContext context) : IClinicRepository
         return query.FirstOrDefaultAsync(cancellationToken);
     }
 
-    public Task<Clinic> UpdateAsync(Clinic entity, CancellationToken cancellationToken = default)
+    public async Task<int> GetTotalCountAsync(Func<IQueryable<Clinic>, IQueryable<Clinic>>? configureQuery = null, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        IQueryable<Clinic> query = _context.Set<Clinic>();
+
+        if (configureQuery != null)
+        {
+            query = configureQuery(query);
+        }
+
+        return query.Count();
+    }
+
+    public async Task<Clinic> UpdateAsync(Clinic entity, CancellationToken cancellationToken = default)
+    {
+        _context.Set<Clinic>().Update(entity);
+        var noUpdated = await _context.SaveChangesAsync(cancellationToken);
+        if(noUpdated == 0)
+        {
+            throw new Exception("Update failed.");
+        }
+        return entity;
     }
 }

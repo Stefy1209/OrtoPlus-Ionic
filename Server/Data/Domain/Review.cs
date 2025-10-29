@@ -9,10 +9,10 @@ public class Review
     public int Rating { get; private set; } = 1;
     public DateTimeOffset Date { get; private set; } = DateTimeOffset.UtcNow;
     
-    public Guid UserAccountId { get; private set; }
+    public Guid UserAccountId { get; set; }
     public UserAccount UserAccount { get; private set; } = null!;
 
-    public Guid ClinicId { get; private set; }
+    public Guid ClinicId { get; set; }
     public Clinic Clinic { get; private set; } = null!;
 
     // EF Core

@@ -1,14 +1,17 @@
+using Common.Enums;
+
 namespace Data.Domain.Account;
 
-public class Account
+public abstract class Account
 {
     public Guid AccountId { get; init; }
     public string Username { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = string.Empty;
+    public abstract AccountType AccountType { get;}
 
     // EF Core
-    private Account() { }
+    protected Account() { }
 
     protected Account(string username, string email, string passwordHash)
     {

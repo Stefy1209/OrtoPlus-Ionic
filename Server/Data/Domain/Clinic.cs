@@ -29,4 +29,23 @@ public class Clinic
         AddressId = addressId;
         ClinicAdminAccountId = clinicAdminAccountId;
     }
+
+    private void UpdateRating()
+    {
+        if (Reviews.Count == 0)
+        {
+            Rating = 0f;
+            return;
+        }
+
+        Rating = (float)Reviews.Average(r => r.Rating);
+    }
+
+    public void AddReview(Review review)
+    {
+        ArgumentNullException.ThrowIfNull(review);
+
+        Reviews.Add(review);
+        UpdateRating();
+    }
 }

@@ -1,5 +1,5 @@
 // src/pages/ClinicDetailPage.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import {
   IonContent,
@@ -21,19 +21,88 @@ import {
   IonIcon,
   IonBadge,
   IonList,
+  IonModal,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonInput,
+  IonSelect,
+  IonSelectOption,
 } from '@ionic/react';
-import { star, location } from 'ionicons/icons';
+import { star, location, add } from 'ionicons/icons';
 import { useIonViewWillEnter } from '@ionic/react';
-import { useClinic } from '../hooks/clinicHooks';
+import { clinicKeys, useClinic } from '../hooks/clinicHooks';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Review } from '../types/review';
+import { clinicApi } from '../api/clinic.api';
+import { Network } from '@capacitor/network';
 
 const ClinicDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const { data: clinic, isLoading, error, refetch } = useClinic(id);
+  const [comment, setComment] = useState('');
+  const [rating, setRating] = useState(5);
+  const [isConnected, setIsConnected] = useState(false);
 
   useIonViewWillEnter(() => {
     refetch();
   });
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      const status = await Network.getStatus();
+      setIsConnected(status.connected);
+    };
+
+    checkStatus();
+
+    let removeListener: (() => void);
+    
+    Network.addListener('networkStatusChange', status => {
+      setIsConnected(status.connected);
+    }).then(handler => {
+      removeListener = () => handler.remove();
+    });
+
+    return () => {
+      if (removeListener) {
+        removeListener();
+      }
+    };
+  }, []);
+
+  const queryClient = useQueryClient();
+
+  const addReviewMutation = useMutation({
+    mutationFn: (review: Review) => clinicApi.addReview(id, review),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: clinicKeys.detail(id) 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: clinicKeys.lists() 
+      });
+      setComment('');
+      setRating(5);
+    }
+  });
+
+  const handleAddReview = async () => {
+    if (!comment.trim()) {
+      return; // Don't submit empty reviews
+    }
+
+    const review: Review = {
+      reviewId: '00000000-0000-0000-0000-000000000000', // Empty Guid
+      comment: comment.trim(),
+      rating: rating,
+      date: new Date().toISOString(),
+      userAccountId: '00000000-0000-0000-0000-000000000000' // Backend will override this
+    };
+
+    await addReviewMutation.mutateAsync(review);
+  };
 
   if (isLoading) {
     return (
@@ -96,10 +165,22 @@ const ClinicDetailPage: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonButtons slot="start">
+          <IonButtons slot='start'>
             <IonBackButton />
           </IonButtons>
           <IonTitle>{clinic.name}</IonTitle>
+          <IonButtons slot='end'>
+            <div
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor: isConnected ? '#10b981' : '#ef4444',
+                marginRight: '16px',
+                boxShadow: `0 0 8px ${isConnected ? '#10b98180' : '#ef444480'}`
+              }}
+            />
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent>
@@ -139,6 +220,7 @@ const ClinicDetailPage: React.FC = () => {
           <IonCardHeader>
             <IonCardTitle>Reviews ({clinic.reviews.length})</IonCardTitle>
           </IonCardHeader>
+
           <IonCardContent>
             {clinic.reviews.length === 0 ? (
               <IonText color="medium">
@@ -165,6 +247,42 @@ const ClinicDetailPage: React.FC = () => {
               </IonList>
             )}
           </IonCardContent>
+
+          <IonToolbar>
+            <IonButtons slot='end'>
+              <IonButton id='open-add-review-modal'>
+                <IonIcon slot='icon-only' icon={add}></IonIcon>
+              </IonButton>
+              <IonModal trigger='open-add-review-modal'>
+                <IonHeader>
+                  <IonToolbar>
+                    <IonTitle>Add Review</IonTitle>
+                    <IonButtons slot='end'>
+                      <IonButton strong={true} onClick={handleAddReview}>Confirm</IonButton>
+                    </IonButtons>
+                  </IonToolbar>
+                </IonHeader>
+                <IonContent className='ion-padding'>
+                  <IonGrid>
+                    <IonRow>
+                      <IonCol>
+                        <IonInput label='Enter Comment' labelPlacement='stacked' type='text' value={comment} onIonInput={(e) => setComment(e.detail.value!)}/>
+                      </IonCol>
+                    </IonRow>
+                    <IonRow>
+                      <IonSelect label='Rating' value={rating} onIonChange={(e) => setRating(e.detail.value)}>
+                        <IonSelectOption value={1}>1</IonSelectOption>
+                        <IonSelectOption value={2}>2</IonSelectOption>
+                        <IonSelectOption value={3}>3</IonSelectOption>
+                        <IonSelectOption value={4}>4</IonSelectOption>
+                        <IonSelectOption value={5}>5</IonSelectOption>
+                      </IonSelect>
+                    </IonRow>
+                  </IonGrid>
+                </IonContent>
+              </IonModal>
+            </IonButtons>
+          </IonToolbar>
         </IonCard>
       </IonContent>
     </IonPage>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import * as signalR from '@microsoft/signalr';
+import { HttpTransportType, HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel }  from '@microsoft/signalr';
+import { TOKEN_KEY } from '../services/auth.service';
 
 interface UseSignalROptions {
   hubUrl: string;
@@ -10,12 +11,16 @@ export const useSignalR = (options: UseSignalROptions) => {
   const { hubUrl, autoConnect = true } = options;
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const connectionRef = useRef<signalR.HubConnection | null>(null);
+  const connectionRef = useRef<HubConnection | null>(null);
 
   useEffect(() => {
     // Build connection
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl)
+    const connection = new HubConnectionBuilder()
+      .withUrl(hubUrl,{
+        accessTokenFactory: () => localStorage.getItem(TOKEN_KEY) ?? '',
+        transport: HttpTransportType.WebSockets,
+        skipNegotiation: true,
+      })
       .withAutomaticReconnect({
         nextRetryDelayInMilliseconds: (retryContext) => {
           // Exponential backoff: 0s, 2s, 10s, 30s, then 30s
@@ -25,7 +30,7 @@ export const useSignalR = (options: UseSignalROptions) => {
           return 30000;
         }
       })
-      .configureLogging(signalR.LogLevel.Information)
+      .configureLogging(LogLevel.Information)
       .build();
 
     connectionRef.current = connection;
@@ -63,7 +68,7 @@ export const useSignalR = (options: UseSignalROptions) => {
 
     // Cleanup
     return () => {
-      if (connection.state === signalR.HubConnectionState.Connected) {
+      if (connection.state === HubConnectionState.Connected) {
         connection.stop();
       }
     };
@@ -77,37 +82,11 @@ export const useSignalR = (options: UseSignalROptions) => {
     connectionRef.current?.off(methodName, callback);
   };
 
-  const invoke = async (methodName: string, ...args: any[]) => {
-    if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
-      try {
-        return await connectionRef.current.invoke(methodName, ...args);
-      } catch (err: any) {
-        console.error(`Error invoking ${methodName}:`, err);
-        throw err;
-      }
-    } else {
-      throw new Error('SignalR connection not established');
-    }
-  };
-
-  const send = async (methodName: string, ...args: any[]) => {
-    if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
-      try {
-        await connectionRef.current.send(methodName, ...args);
-      } catch (err: any) {
-        console.error(`Error sending ${methodName}:`, err);
-        throw err;
-      }
-    }
-  };
-
   return {
     connection: connectionRef.current,
     isConnected,
     error,
     on,
-    off,
-    invoke,
-    send
+    off
   };
 };

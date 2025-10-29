@@ -1,3 +1,5 @@
+import { TOKEN_KEY } from "./auth.service";
+
 export interface ApiError {
   message: string;
   status: number;
@@ -11,6 +13,11 @@ class ApiService {
     this.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5189';
   }
 
+  private getAuthHeader():Record<string, string> {
+    const token = localStorage.getItem(TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -20,6 +27,7 @@ class ApiService {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...this.getAuthHeader(),
         ...options.headers,
       },
     };
@@ -58,6 +66,21 @@ class ApiService {
   async get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'GET' });
   }
+
+  async patch<T>(endpoint: string, body: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async post<T>(endpoint: string, body: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
 }
 
 export default new ApiService();

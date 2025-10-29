@@ -9,5 +9,6 @@ public class ClinicProfile : Profile
     public ClinicProfile()
     {
         CreateMap<Clinic, ClinicDto>();
+        CreateMap<ClinicDto, Clinic>();
     }
 }

@@ -21,5 +21,9 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(a => a.PasswordHash)
             .IsRequired()
             .HasMaxLength(512);
+
+        // Unique constraint on Email
+        builder.HasIndex(a => a.Email)
+            .IsUnique();
     }
 }

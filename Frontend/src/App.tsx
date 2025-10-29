@@ -34,7 +34,10 @@ import './theme/variables.css';
 import ClinicsPage from './pages/ClinicsPage';
 import ClinicDetailPage from './pages/ClinicDetailPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { NotificationProvider } from './components/NotificationProvider';
+import { NotificationProvider } from './providers/NotificationProvider';
+import AuthenticationPage from './pages/AuthenticationPage';
+import authService from './services/auth.service';
+import ProtectedRoute from './components/ProtectedRoute';
 
 setupIonicReact();
 
@@ -47,26 +50,29 @@ const queryClient = new QueryClient({
   },
 });
 
-const App: React.FC = () => (
-  <QueryClientProvider client={queryClient}>
-    <IonApp>
-      <NotificationProvider>
-      <IonReactRouter>
-        <IonRouterOutlet>
-          <Route exact path="/clinics">
-            <ClinicsPage />
-          </Route>
-          <Route exact path="/clinics/:id">
-              <ClinicDetailPage />
-            </Route>
-          <Route exact path="/">
-            <Redirect to="/clinics" />
-          </Route>
-        </IonRouterOutlet>
-      </IonReactRouter>
-      </NotificationProvider>
-    </IonApp>
-  </QueryClientProvider>
-);
+const App: React.FC = () => {
+  const isAuthenticated = authService.isAuthenticated();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <IonApp>
+          <IonReactRouter>
+            <IonRouterOutlet>
+              <Route exact path="/authentication">
+                {isAuthenticated ? <Redirect to="/clinics" /> : <AuthenticationPage />}
+              </Route>
+              <ProtectedRoute exact path="/clinics" component={ClinicsPage} />
+              <NotificationProvider>
+                <ProtectedRoute path="/clinics/:id" component={ClinicDetailPage} />
+              </NotificationProvider>
+              <Route exact path="/">
+                <Redirect to={isAuthenticated ? "/clinics" : "/authentication"}/>
+              </Route>
+            </IonRouterOutlet>
+          </IonReactRouter>
+      </IonApp>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
