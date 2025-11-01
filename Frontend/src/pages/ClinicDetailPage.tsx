@@ -1,5 +1,5 @@
 // src/pages/ClinicDetailPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import {
   IonContent,
@@ -44,6 +44,7 @@ const ClinicDetailPage: React.FC = () => {
   const [comment, setComment] = useState('');
   const [rating, setRating] = useState(5);
   const [isConnected, setIsConnected] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useIonViewWillEnter(() => {
     refetch();
@@ -102,6 +103,7 @@ const ClinicDetailPage: React.FC = () => {
     };
 
     await addReviewMutation.mutateAsync(review);
+    setIsOpen(false);
   };
 
   if (isLoading) {
@@ -250,10 +252,10 @@ const ClinicDetailPage: React.FC = () => {
 
           <IonToolbar>
             <IonButtons slot='end'>
-              <IonButton id='open-add-review-modal'>
+              <IonButton id='open-add-review-modal' onClick={() => setIsOpen(true)}>
                 <IonIcon slot='icon-only' icon={add}></IonIcon>
               </IonButton>
-              <IonModal trigger='open-add-review-modal'>
+              <IonModal isOpen={isOpen} trigger='open-add-review-modal'>
                 <IonHeader>
                   <IonToolbar>
                     <IonTitle>Add Review</IonTitle>
