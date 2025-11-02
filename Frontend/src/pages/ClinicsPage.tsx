@@ -4,7 +4,6 @@ import { useClinics } from '../hooks/clinicHooks';
 import { useEffect, useState } from 'react';
 import { Clinic } from '../types/clinic';
 import authService from '../services/auth.service';
-import { useQueryClient } from '@tanstack/react-query';
 
 const ClinicsPage: React.FC = () => {
   // Clinics
@@ -23,12 +22,14 @@ const ClinicsPage: React.FC = () => {
       if (pageNumber === 1) {
         setClinics(pageMetadata.items);
       } else {
-        setClinics(prev => [...prev, ...pageMetadata.items]);
+        setClinics(prev => [...prev, ...pageMetadata.items])
       }
     }
-  }, [pageMetadata, pageNumber, filterName, minRating]);
+  }, [pageMetadata]);
 
   useIonViewWillEnter(() => {
+    setPageNumber(1);
+    setClinics([]);
     refetch();
   });
 
@@ -152,13 +153,9 @@ const ClinicsPage: React.FC = () => {
     );
   };
 
-  // Log Out
-  const queryClient = useQueryClient();
-
   const handleLogout = () => {
     try {
       authService.logout();
-      queryClient.clear();
       window.location.href='/'
     } catch (error) {
       console.error('Logout failed:', error);

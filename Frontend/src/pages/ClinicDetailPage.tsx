@@ -28,13 +28,12 @@ import {
   IonInput,
   IonSelect,
   IonSelectOption,
+  IonToast,
 } from '@ionic/react';
 import { star, location, add } from 'ionicons/icons';
 import { useIonViewWillEnter } from '@ionic/react';
-import { clinicKeys, useClinic } from '../hooks/clinicHooks';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAddReview, useClinic } from '../hooks/clinicHooks';
 import { Review } from '../types/review';
-import { clinicApi } from '../api/clinic.api';
 import { Network } from '@capacitor/network';
 
 const ClinicDetailPage: React.FC = () => {
@@ -45,6 +44,8 @@ const ClinicDetailPage: React.FC = () => {
   const [rating, setRating] = useState(5);
   const [isConnected, setIsConnected] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const { addReview, error: addReviewError } = useAddReview(id, refetch);
 
   useIonViewWillEnter(() => {
     refetch();
@@ -62,32 +63,23 @@ const ClinicDetailPage: React.FC = () => {
     
     Network.addListener('networkStatusChange', status => {
       setIsConnected(status.connected);
+      if (status.connected) {
+        refetch();
+      }
     }).then(handler => {
       removeListener = () => handler.remove();
     });
+
+    if (addReviewError) {
+      setShowErrorToast(true);
+    }
 
     return () => {
       if (removeListener) {
         removeListener();
       }
     };
-  }, []);
-
-  const queryClient = useQueryClient();
-
-  const addReviewMutation = useMutation({
-    mutationFn: (review: Review) => clinicApi.addReview(id, review),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: clinicKeys.detail(id) 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: clinicKeys.lists() 
-      });
-      setComment('');
-      setRating(5);
-    }
-  });
+  }, [addReviewError]);
 
   const handleAddReview = async () => {
     if (!comment.trim()) {
@@ -102,8 +94,16 @@ const ClinicDetailPage: React.FC = () => {
       userAccountId: '00000000-0000-0000-0000-000000000000' // Backend will override this
     };
 
-    await addReviewMutation.mutateAsync(review);
-    setIsOpen(false);
+    try {
+      await addReview(review);
+    } catch(err) {
+
+    } finally {
+      setComment('');
+      setRating(5);
+      setIsOpen(false);
+    }
+
   };
 
   if (isLoading) {
@@ -286,6 +286,14 @@ const ClinicDetailPage: React.FC = () => {
             </IonButtons>
           </IonToolbar>
         </IonCard>
+        <IonToast 
+          isOpen={showErrorToast} 
+          onDidDismiss={() => setShowErrorToast(false)} 
+          message={addReviewError?.message || 'Failed to add review'}
+          duration={3000}
+          color='danger'
+          position='bottom'
+        />
       </IonContent>
     </IonPage>
   );

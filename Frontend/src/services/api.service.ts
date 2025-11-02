@@ -67,13 +67,6 @@ class ApiService {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
-  async patch<T>(endpoint: string, body: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PATCH',
-      body: JSON.stringify(body),
-    });
-  }
-
   async post<T>(endpoint: string, body: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',

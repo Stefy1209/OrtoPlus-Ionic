@@ -33,7 +33,6 @@ import '@ionic/react/css/palettes/dark.system.css';
 import './theme/variables.css';
 import ClinicsPage from './pages/ClinicsPage';
 import ClinicDetailPage from './pages/ClinicDetailPage';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NotificationProvider } from './providers/NotificationProvider';
 import AuthenticationPage from './pages/AuthenticationPage';
 import authService from './services/auth.service';
@@ -41,20 +40,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 setupIonicReact();
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
 const App: React.FC = () => {
   const isAuthenticated = authService.isAuthenticated();
 
   return (
-    <QueryClientProvider client={queryClient}>
       <IonApp>
           <IonReactRouter>
             <IonRouterOutlet>
@@ -71,7 +60,6 @@ const App: React.FC = () => {
             </IonRouterOutlet>
           </IonReactRouter>
       </IonApp>
-    </QueryClientProvider>
   );
 }
 
